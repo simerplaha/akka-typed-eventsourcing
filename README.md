@@ -31,7 +31,9 @@ String         |    String     |   String   | List[String] | Timestamp
 ## APIs
 ---
 
-#### CreateUser
+#### Command: CreateUser
+##### Event - UserCreated
+
 http://localhost:8080/createUser?username=John&name=Smith&password=123
 
     {
@@ -47,7 +49,8 @@ Running the same URL again returns error message
         "message": "Username 'John' with name 'Smith' already exists."
     }
 
-#### UpdateName
+#### Command: UpdateName
+##### Event - UserNameUpdated
 
 http://localhost:8080/updateName?username=John&name=Jhonny
 
@@ -70,7 +73,8 @@ Running the same URL again returns error message
         }
     }
     
-#### ChangePassword
+#### Command: ChangePassword
+##### Event - UserPasswordChanged
 
 http://localhost:8080/changePassword?username=John&password=PA$$W0RD
 
@@ -81,7 +85,8 @@ http://localhost:8080/changePassword?username=John&password=PA$$W0RD
         "deleted": false
     }
 
-#### DeleteUser
+#### Command: DeleteUser
+##### Event - UserDeleted
 
 http://localhost:8080/deleteUser?username=John
 
