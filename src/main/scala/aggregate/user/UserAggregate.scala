@@ -116,4 +116,6 @@ object UserAggregate extends Aggregate[UserCommand, UserEvent, UserState] with U
       password = "",
       deleted = false
     )
+
+
 }

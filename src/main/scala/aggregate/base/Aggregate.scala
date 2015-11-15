@@ -1,7 +1,7 @@
 package aggregate.base
 
 import akka.typed.ScalaDSL._
-import akka.typed.{ActorRef, Behavior, PreStart}
+import akka.typed.{Props, ActorRef, Behavior, PreStart}
 import com.google.gson.Gson
 import com.typesafe.scalalogging.LazyLogging
 import commands.AggregateCommand
@@ -58,7 +58,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     * 2. Fetches all the EVENTS from the database for the id
     * 3. Replays all events to restore it's state.
     */
-  def start(id: String): Behavior[C] = {
+  private def start(id: String): Behavior[C] = {
     logger.info(s"Recovering state for Aggregate: ${this.getClass.getSimpleName}(id = $id)")
     Full[C] {
       case Sig(_, PreStart) =>
@@ -103,4 +103,6 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
   protected def uninitialized(id: String): Behavior[C]
 
   protected val initialState: S
+
+  def props(id:String) = Props(start(id))
 }

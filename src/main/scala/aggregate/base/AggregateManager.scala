@@ -16,7 +16,7 @@ import scala.concurrent.Future
   * This sends commands to it's respective child aggregate.
   */
 
-trait AggregateManager[AMC <: AggregateManagerCommand, AC <: AggregateCommand, AE <: AggregateEvent, AS <: State] extends ActorUtil with LazyLogging {
+trait AggregateManager[AMC <: AggregateManagerCommand, AC <: AggregateCommand] extends ActorUtil with LazyLogging {
 
   /**
     * Processes each request in a Future block.
@@ -50,11 +50,11 @@ trait AggregateManager[AMC <: AggregateManagerCommand, AC <: AggregateCommand, A
   }
 
   private def getChild(ctx: ActorContext[AMC], id: String): ActorRef[AC] =
-    findOrCreate(ctx, Props(childAggregate.start(id)), id)
+    findOrCreate(ctx, childAggregate.props(id), id)
 
   protected def validateCommand(command: AMC): Either[ErrorMessage, AC]
 
-  protected val childAggregate: Aggregate[AC, AE, AS]
+  protected val childAggregate: Aggregate[AC, _, _]
 
   /**
     * Used by clients to to instantiate the extending AggregateManager.

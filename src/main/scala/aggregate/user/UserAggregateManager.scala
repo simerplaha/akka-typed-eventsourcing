@@ -12,7 +12,7 @@ import messages.ErrorMessage
   * Root manager for User commands.
   */
 
-object UserAggregateManager extends AggregateManager[UserManagerCommand, UserCommand, UserEvent, UserState] {
+object UserAggregateManager extends AggregateManager[UserManagerCommand, UserCommand] {
 
   /**
     * Validates command and returns an Error or a Command for the child UserAggregate to process.
