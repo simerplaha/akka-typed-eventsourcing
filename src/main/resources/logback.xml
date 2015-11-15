@@ -1,0 +1,36 @@
+<configuration scan="true" scanPeriod="60 seconds">
+    <property name="logPattern" value="%d{dd-MMM-yyyy HH:mm:ss.SSS} %-5level %-10.10thread %-50.50logger{50} | %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${logPattern}</pattern>
+        </layout>
+    </appender>
+
+    <appender name="REQUEST_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./log/es.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>./build/es.log.%i.gz</fileNamePattern>
+            <minIndex>0</minIndex>
+            <maxIndex>2</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${logPattern}</pattern>
+        </layout>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="REQUEST_LOG_FILE"/>
+    </root>
+
+</configuration>
+
+
