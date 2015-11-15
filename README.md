@@ -32,7 +32,7 @@ String         |    String     |   String   | List[String] | Timestamp
 ---
 
 #### CreateUser
-http://localhost:8080/createUser?username=John&name=Smith&password=123
+URL :http://localhost:8080/createUser?username=John&name=Smith&password=123
 
     {
         "username": "John",
