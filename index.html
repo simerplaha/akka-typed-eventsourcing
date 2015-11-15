@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Akka-typed-eventsourcing by simerplaha</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Akka-typed-eventsourcing</h1>
+      <h2 class="project-tagline">An implementation of Eventsourcing with Akka-typed, Spray, Slick &amp; Postgres.</h2>
+      <a href="https://github.com/simerplaha/akka-typed-eventsourcing" class="btn">View on GitHub</a>
+      <a href="https://github.com/simerplaha/akka-typed-eventsourcing/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/simerplaha/akka-typed-eventsourcing/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="akka-typed-eventsourcing" class="anchor" href="#akka-typed-eventsourcing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Akka-typed-eventsourcing</h1>
+
+<hr>
+
+<p>An implementation of Eventsourcing with Akka-typed, Spray, Slick &amp; Postgres.</p>
+
+<h2>
+<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h2>
+
+<hr>
+
+<ol>
+<li>A simple Spray REST API to submit commands to Akka-typed's ActorSystem.</li>
+<li>Implements "Actor per request" pattern using typed actors.</li>
+<li>Provides base implementations for AggregateManager and Aggregate.</li>
+<li>Uses Akka-typed's Total behavior's lifecycle event 'PreStart' to replay all stored events which restores Actor's state.</li>
+<li>Maps stored JSON events to relevant Case classes.</li>
+<li>Uses Slick-pg extension.</li>
+<li>Uses Gson for JSON parsing.</li>
+</ol>
+
+<h2>
+<a id="running" class="anchor" href="#running" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running</h2>
+
+<hr>
+
+<ol>
+<li>Add your postgres database configuration in application.conf</li>
+<li>Run Schema.scala's main method to create the database schema</li>
+<li>Run Boot.scala to start application.</li>
+</ol>
+
+<h2>
+<a id="events-table" class="anchor" href="#events-table" aria-hidden="true"><span class="octicon octicon-link"></span></a>EVENTS table</h2>
+
+<table>
+<thead>
+<tr>
+<th>PERSISTENT_ID</th>
+<th>EVENT_JSON</th>
+<th>EVENT_NAME</th>
+<th>TAGS</th>
+<th>CREATE_TIME</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>String</td>
+<td>String</td>
+<td>String</td>
+<td>List[String]</td>
+<td>Timestamp</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="apis" class="anchor" href="#apis" aria-hidden="true"><span class="octicon octicon-link"></span></a>APIs</h2>
+
+<hr>
+
+<h4>
+<a id="createuser" class="anchor" href="#createuser" aria-hidden="true"><span class="octicon octicon-link"></span></a>CreateUser</h4>
+
+<p>http://localhost:8080/createUser?username=John&amp;name=Smith&amp;password=123</p>
+
+<pre><code>{
+    "username": "John",
+    "name": "Smith",
+    "password": "123",
+    "deleted": false
+}
+</code></pre>
+
+<p>Running the same URL again returns error message</p>
+
+<pre><code>{
+    "message": "Username 'John' with name 'Smith' already exists."
+}
+</code></pre>
+
+<h4>
+<a id="updatename" class="anchor" href="#updatename" aria-hidden="true"><span class="octicon octicon-link"></span></a>UpdateName</h4>
+
+<p>http://localhost:8080/updateName?username=John&amp;name=Jhonny</p>
+
+<pre><code>{
+    "username": "John",
+    "name": "Jhonny",
+    "password": "123",
+    "deleted": false
+}
+</code></pre>
+
+<p>Running the same URL again returns error message</p>
+
+<pre><code>{
+    "message": "Name unchanged!",
+    "state": {
+        "username": "John",
+        "name": "Jhonny",
+        "password": "123",
+        "deleted": false
+    }
+}
+</code></pre>
+
+<h4>
+<a id="changepassword" class="anchor" href="#changepassword" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChangePassword</h4>
+
+<p>http://localhost:8080/changePassword?username=John&amp;password=PA$$W0RD</p>
+
+<pre><code>{
+    "username": "John",
+    "name": "Jhonny",
+    "password": "PA$$W0RD",
+    "deleted": false
+}
+</code></pre>
+
+<h4>
+<a id="deleteuser" class="anchor" href="#deleteuser" aria-hidden="true"><span class="octicon octicon-link"></span></a>DeleteUser</h4>
+
+<p>http://localhost:8080/deleteUser?username=John</p>
+
+<pre><code>{
+    "username": "John",
+    "name": "Jhonny",
+    "password": "PA$$W0RD",
+    "deleted": true
+}
+</code></pre>
+
+<p>Calling CreateUser on a delete users display this message: http://localhost:8080/createUser?username=John&amp;name=Smith&amp;password=123</p>
+
+<pre><code>{
+    "message": "Not a valid request: 'Initialize' for current state: 'deleted'",
+    "state": {
+        "username": "John",
+        "name": "Jhonny",
+        "password": "PA$$W0RD",
+        "deleted": true
+    }
+}
+</code></pre>
+
+<h3>
+<a id="todos" class="anchor" href="#todos" aria-hidden="true"><span class="octicon octicon-link"></span></a>TODOs</h3>
+
+<ul>
+<li>[ ] Test cases</li>
+<li>[ ] Stopping Actors after reaching certain threshold of in-memory Actors.</li>
+<li>[ ] Snapshotting</li>
+<li>[ ] Read/Query side implementation with <a href="https://github.com/MfgLabs/akka-stream-extensions">https://github.com/MfgLabs/akka-stream-extensions</a>
+</li>
+</ul>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/simerplaha/akka-typed-eventsourcing">Akka-typed-eventsourcing</a> is maintained by <a href="https://github.com/simerplaha">simerplaha</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
