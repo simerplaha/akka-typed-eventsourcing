@@ -58,7 +58,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     * 2. Fetches all the EVENTS from the database for the id
     * 3. Replays all events to restore it's state.
     */
-  private def start(id: String): Behavior[C] = {
+  private def recover(id: String): Behavior[C] = {
     logger.info(s"Recovering state for Aggregate: ${this.getClass.getSimpleName}(id = $id)")
     Full[C] {
       case Sig(_, PreStart) =>
@@ -67,7 +67,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
           persistentEvent =>
             toEvent(persistentEvent.json, persistentEvent.eventName)
         }
-        recover(id, events, initialState, uninitialized(id))
+        playEvents(id, events, initialState, uninitialized(id))
     }
   }
 
@@ -75,12 +75,12 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     * Recursively plays all the events to restore aggregate's state.
     */
   @tailrec
-  private def recover(id: String, events: List[E], state: S, currentBehavior: Behavior[C]): Behavior[C] = {
+  private def playEvents(id: String, events: List[E], state: S, currentBehavior: Behavior[C]): Behavior[C] = {
     events match {
       case Nil => currentBehavior
       case event :: remainingEvents =>
         val stateAndNextBehavior = applyEvent(id, event, state)
-        recover(id, remainingEvents, stateAndNextBehavior.currentState, stateAndNextBehavior.behavior)
+        playEvents(id, remainingEvents, stateAndNextBehavior.currentState, stateAndNextBehavior.behavior)
     }
   }
 
@@ -104,5 +104,5 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
 
   protected val initialState: S
 
-  def props(id:String) = Props(start(id))
+  def props(id:String) = Props(recover(id))
 }
