@@ -1,6 +1,5 @@
 # Akka-typed-eventsourcing
-
---
+-
 
 A simple implementation of Eventsourcing with Akka-typed, Spray, Slick & Postgres.
 
