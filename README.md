@@ -1,10 +1,10 @@
 # Akka-typed-eventsourcing
--
+----
 
 A simple implementation of Eventsourcing with Akka-typed, Spray, Slick & Postgres.
 
 ## Summary
---
+----
 
 1. A simple Spray REST API to submit commands to Akka-typed's ActorSystem.
 2. Implements "Actor per request" pattern using typed actors.
