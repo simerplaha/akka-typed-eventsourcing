@@ -1,7 +1,7 @@
 package aggregate.base
 
 import akka.typed.ScalaDSL._
-import akka.typed.{ActorRef, ActorContext, Behavior, Props}
+import akka.typed._
 import com.typesafe.scalalogging.LazyLogging
 import commands.{AggregateManagerCommand, AggregateCommand}
 import events.AggregateEvent
@@ -19,19 +19,18 @@ import scala.concurrent.Future
 trait AggregateManager[AMC <: AggregateManagerCommand, AC <: AggregateCommand] extends ActorUtil with LazyLogging {
 
   /**
-    * Processes each request in a Future block.
+    * Processes each request.
     */
   private val aggregateManager: Behavior[AMC] =
-    ContextAware[AMC] {
-      ctx =>
-        SelfAware[AMC] {
-          self =>
-            implicit val executionContext = ctx.executionContext
-            Static[AMC] {
-              managerCommand =>
-                Future(processCommand(ctx, managerCommand))
-            }
-        }
+    Full[AMC] {
+      case Msg(ctx, command: AMC) =>
+        logger.info(s"Processing command in ${this.getClass.getSimpleName}:" + command)
+        processCommand(ctx, command)
+        Same
+      case Sig(_, failed: Failed) =>
+        logger.error("Error running child Actor! Please check for exceptions - Restarting child actor:", failed.cause)
+        failed.decide(Failed.Restart)
+        Same
     }
 
   /**
@@ -41,9 +40,10 @@ trait AggregateManager[AMC <: AggregateManagerCommand, AC <: AggregateCommand] e
   private def processCommand(ctx: ActorContext[AMC], managerCommand: AMC): Unit = {
     val childCommand = validateCommand(managerCommand)
     childCommand match {
-      case Right(nextCommand) =>
+      case Right(childCommand) =>
         val child: ActorRef[AC] = getChild(ctx, managerCommand.id)
-        child ! nextCommand
+        ctx.watch(child)
+        child ! childCommand
       case Left(error) =>
         managerCommand.replyTo ! error
     }

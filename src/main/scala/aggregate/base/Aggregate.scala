@@ -1,7 +1,7 @@
 package aggregate.base
 
 import akka.typed.ScalaDSL._
-import akka.typed.{Props, ActorRef, Behavior, PreStart}
+import akka.typed._
 import com.google.gson.Gson
 import com.typesafe.scalalogging.LazyLogging
 import commands.AggregateCommand
@@ -34,6 +34,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     val eventJson = gson.toJson(event)
     val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags)
     eventDAO.createEvent(persistenceEvent)
+    logger.info(s"Applying event: $event to ${this.getClass.getSimpleName}(id = '$id')")
     applyEvent(id, event, previousState)
   }
 
@@ -59,7 +60,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     * 3. Replays all events to restore it's state.
     */
   private def recover(id: String): Behavior[C] = {
-    logger.info(s"Recovering state for Aggregate: ${this.getClass.getSimpleName}(id = $id)")
+    logger.info(s"Recovering state for Aggregate: ${this.getClass.getSimpleName}(id = '$id')")
     Full[C] {
       case Sig(_, PreStart) =>
         val pEvents = eventDAO.getEvents(id)
@@ -77,7 +78,9 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
   @tailrec
   private def playEvents(id: String, events: List[E], state: S, currentBehavior: Behavior[C]): Behavior[C] = {
     events match {
-      case Nil => currentBehavior
+      case Nil =>
+        logger.info(s"Finished playingEvents in recovery mode for: ${this.getClass.getSimpleName}(id = '$id')")
+        currentBehavior
       case event :: remainingEvents =>
         val stateAndNextBehavior = applyEvent(id, event, state)
         playEvents(id, remainingEvents, stateAndNextBehavior.currentState, stateAndNextBehavior.behavior)
@@ -104,5 +107,5 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
 
   protected val initialState: S
 
-  def props(id:String) = Props(recover(id))
+  def props(id: String) = Props(recover(id))
 }
