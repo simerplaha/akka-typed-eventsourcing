@@ -8,7 +8,7 @@ An implementation of Eventsourcing with Akka-typed, Spray, Slick & Postgres.
 
 1. A simple Spray REST API to submit commands to Akka-typed's ActorSystem.
 2. Implements "Actor per request" pattern using typed actors.
-3. Provides base implementations for AggregateManager and Aggregate.
+3. Provides base implementations for [AggregateManager](https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/aggregate/base/AggregateManager.scala) and [Aggregate](https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/aggregate/base/Aggregate.scala).
 4. Uses Akka-typed's Total behavior's lifecycle event 'PreStart' to replay all stored events which restores Actor's state.
 5. Maps stored JSON events to relevant Case classes.
 6. Uses Slick-pg extension.
