@@ -45,60 +45,66 @@ object UserAggregate extends Aggregate[UserCommand, UserEvent, UserState] with U
   /**
     * Initializes a user by create a UserCreated event.
     */
-  protected def uninitialized(id: String): Behavior[UserCommand] = {
-    Total[UserCommand] {
-      case Initialize(username, name, password, replyTo) =>
-        val event = UserCreated(username, name, password)
-        persistAndRespond(id, event, initialState, replyTo).behavior
-      case error: UserCommand =>
-        error.replyTo ! ErrorMessage(s"User not initialized yet! Invalid command: '${error.getClass.getSimpleName}'")
-        Stopped
+  protected def uninitialized(id: String): Behavior[UserCommand] =
+    ContextAware[UserCommand] {
+      ctx =>
+        Total[UserCommand] {
+          case Initialize(username, name, password, replyTo) =>
+            val event = UserCreated(username, name, password)
+            persistAndRespond(id, event, initialState, replyTo, ctx).behavior
+          case error: UserCommand =>
+            error.replyTo ! ErrorMessage(s"User not initialized yet! Invalid command: '${error.getClass.getSimpleName}'")
+            Stopped
+        }
     }
-  }
 
   /**
     * Implements rules for 'created' state of a User.
     */
-  private def created(id: String, user: UserState): Behavior[UserCommand] = {
-    Total[UserCommand] {
-      case GetState(replyTo) =>
-        replyTo ! user
-        Same
-      case UpdateName(name, replyTo) =>
-        if (name == user.name) {
-          replyTo ! Message("Name unchanged!", Some(user))
-          Same
-        } else {
-          persistAndRespond(id, UserNameUpdated(name), user, replyTo).behavior
+  private def created(id: String, user: UserState): Behavior[UserCommand] =
+    ContextAware[UserCommand] {
+      ctx =>
+        Total[UserCommand] {
+          case GetState(replyTo) =>
+            replyTo ! user
+            Same
+          case UpdateName(name, replyTo) =>
+            if (name == user.name) {
+              replyTo ! Message("Name unchanged!", Some(user))
+              Same
+            } else {
+              persistAndRespond(id, UserNameUpdated(name), user, replyTo, ctx).behavior
+            }
+          case ChangePassword(password, replyTo) =>
+            persistAndRespond(id, UserPasswordChanged(password), user, replyTo, ctx).behavior
+          case DeleteUser(name, replyTo) =>
+            persistAndRespond(id, UserDeleted(), user, replyTo, ctx).behavior
+          case Initialize(username, name, password, replyTo) =>
+            replyTo ! ErrorMessage(s"Username '$id' with name '$name' already exists.")
+            Same
+          case unhandledCommand: UserCommand =>
+            unhandledCommand.replyTo ! ErrorMessage(s"Not a valid request: '${unhandledCommand.getClass.getSimpleName}' for current state: 'created'", Some(user))
+            Same
         }
-      case ChangePassword(password, replyTo) =>
-        persistAndRespond(id, UserPasswordChanged(password), user, replyTo).behavior
-      case DeleteUser(name, replyTo) =>
-        persistAndRespond(id, UserDeleted(), user, replyTo).behavior
-      case Initialize(username, name, password, replyTo) =>
-        replyTo ! ErrorMessage(s"Username '$id' with name '$name' already exists.")
-        Same
-      case unhandledCommand: UserCommand =>
-        unhandledCommand.replyTo ! ErrorMessage(s"Not a valid request: '${unhandledCommand.getClass.getSimpleName}' for current state: 'created'", Some(user))
-        Same
     }
-  }
 
   /**
     * Implements rules for 'deleted' state of a User.
     */
-  private def deleted(id: String, user: UserState): Behavior[UserCommand] = {
-    Total[UserCommand] {
-      case GetState(replyTo) =>
-        replyTo ! user
-        Same
-      case DeleteUser(username, replyTo) =>
-        persistAndRespond(id, UserDeleted(), user, replyTo).behavior
-      case unhandledCommand: UserCommand =>
-        unhandledCommand.replyTo ! ErrorMessage(s"Not a valid request: '${unhandledCommand.getClass.getSimpleName}' for current state: 'deleted'", Some(user))
-        Same
+  private def deleted(id: String, user: UserState): Behavior[UserCommand] =
+    ContextAware[UserCommand] {
+      ctx =>
+        Total[UserCommand] {
+          case GetState(replyTo) =>
+            replyTo ! user
+            Same
+          case DeleteUser(username, replyTo) =>
+            persistAndRespond(id, UserDeleted(), user, replyTo, ctx).behavior
+          case unhandledCommand: UserCommand =>
+            unhandledCommand.replyTo ! ErrorMessage(s"Not a valid request: '${unhandledCommand.getClass.getSimpleName}' for current state: 'deleted'", Some(user))
+            Same
+        }
     }
-  }
 
   /**
     * Returns a Full classname for the passed Event name.

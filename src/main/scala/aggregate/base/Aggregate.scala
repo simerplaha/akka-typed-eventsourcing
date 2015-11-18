@@ -1,5 +1,7 @@
 package aggregate.base
 
+import java.sql.Timestamp
+
 import akka.typed.ScalaDSL._
 import akka.typed._
 import com.google.gson.Gson
@@ -8,7 +10,7 @@ import commands.AggregateCommand
 import database.EventDAO
 import domain.PersistentEvent
 import events.AggregateEvent
-import messages.{State, Response}
+import messages.{Response, State}
 import utils.ActorUtil
 
 import scala.annotation.tailrec
@@ -30,10 +32,13 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
   protected def persist(id: String,
                         event: E,
                         previousState: S,
+                        context: ActorContext[C],
                         tags: List[String] = emptyList): NextBehaviorAndCurrentState = {
+    //    val eventJson = compact(render(decompose(event)))
     val eventJson = gson.toJson(event)
-    val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags)
+    val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags, new Timestamp(System.currentTimeMillis()))
     eventDAO.createEvent(persistenceEvent)
+    context.system.eventStream.publish(event)
     logger.info(s"Applying event: $event to ${this.getClass.getSimpleName}(id = '$id')")
     applyEvent(id, event, previousState)
   }
@@ -46,9 +51,10 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
                                   event: E,
                                   previousState: S,
                                   replyTo: ActorRef[Response],
+                                  context: ActorContext[C],
                                   response: Option[Response] = None,
                                   tags: List[String] = emptyList): NextBehaviorAndCurrentState = {
-    val nextBehaviorCurrentState = persist(id, event, previousState, tags)
+    val nextBehaviorCurrentState = persist(id, event, previousState, context, tags)
     replyTo ! response.getOrElse(nextBehaviorCurrentState.currentState)
     nextBehaviorCurrentState
   }

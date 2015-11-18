@@ -3,13 +3,9 @@ package aggregate.base
 import akka.typed.ScalaDSL._
 import akka.typed._
 import com.typesafe.scalalogging.LazyLogging
-import commands.{AggregateManagerCommand, AggregateCommand}
-import events.AggregateEvent
+import commands.{AggregateCommand, AggregateManagerCommand}
+import messages.ErrorMessage
 import utils.ActorUtil
-
-import messages.{State, ErrorMessage}
-
-import scala.concurrent.Future
 
 /**
   * Root aggregate manager for aggregates.
@@ -29,7 +25,7 @@ trait AggregateManager[AMC <: AggregateManagerCommand, AC <: AggregateCommand] e
         Same
       case Sig(_, failed: Failed) =>
         logger.error("Error running child Actor! Please check for exceptions - Restarting child actor:", failed.cause)
-        failed.decide(Failed.Restart)
+        failed.decide(Failed.Stop)
         Same
     }
 

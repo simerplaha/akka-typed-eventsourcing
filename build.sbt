@@ -33,5 +33,7 @@ libraryDependencies ++= Seq(
   "com.zaxxer" % "HikariCP" % "2.4.1",
   "org.slf4j" % "slf4j-nop" % "1.6.4",
   "com.google.code.gson" % "gson" % "2.4",
-  "org.json4s" %% "json4s-native" % "3.2.10"
+  "org.json4s" %% "json4s-native" % "3.2.10",
+  "net.liftweb" %% "lift-json" % "3.0-M5-1",
+  "net.liftweb" %% "lift-json-ext" % "3.0-M5-1"
 )
