@@ -6,7 +6,7 @@ import akka.typed._
 import com.typesafe.scalalogging.LazyLogging
 import commands.UserManagerAggregateCommands.UserManagerCommand
 import commands.{AggregateManagerCommand, UserManagerAggregateCommands}
-import events.UserAggregateEvents
+import events.{UserEvent, UserAggregateEvents}
 import messages.{Message, _}
 import read.UserListener
 import spray.http.StatusCodes._
@@ -20,12 +20,9 @@ case class Product(id: String, name: String)(val replyTo: ActorRef[Response]) ex
   override val validate: List[ErrorMessage] = List.empty[ErrorMessage]
 }
 
-
 trait RequestHandler extends ActorUtil with Json4sSupport with LazyLogging with UserAggregateEvents {
 
-
   val systemTyped = ActorSystem("actor-system-typed", Props(rootGuardian))
-
 
   /**
     * Root guardian - Sends the command to it's relevant AggregateManager.
@@ -36,11 +33,8 @@ trait RequestHandler extends ActorUtil with Json4sSupport with LazyLogging with 
       ctx =>
         val minimalResponseActor = ctx.spawn(Props(minimalResponseBehavior), "minimalResponseActor")
         val userAggregateManager = ctx.spawn(UserAggregateManager.props, "userAggregateManager")
-        val userEventListener = ctx.spawn(Props(UserListener.userListener), "userEventListener")
 
-        val untypedActor = classOf[ActorRef[_]].getDeclaredMethod("untypedRef").invoke(userEventListener).asInstanceOf[akka.actor.ActorRef]
-
-        ctx.system.eventStream.subscribe(untypedActor, classOf[(String, UserNameUpdated)])
+        EventSubscribers.initialize(ctx)
 
         Static[InitialCommand] {
           initialCommand =>

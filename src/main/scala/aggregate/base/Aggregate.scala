@@ -10,6 +10,7 @@ import commands.AggregateCommand
 import database.EventDAO
 import domain.PersistentEvent
 import events.AggregateEvent
+import main.ReadEventBus
 import messages.{Response, State}
 import utils.ActorUtil
 
@@ -34,11 +35,12 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
                         previousState: S,
                         context: ActorContext[C],
                         tags: List[String] = emptyList): NextBehaviorAndCurrentState = {
-    //    val eventJson = compact(render(decompose(event)))
+    logger.info(s"Persisting event: $event")
     val eventJson = gson.toJson(event)
-    val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags, new Timestamp(System.currentTimeMillis()))
+    val createTime = new Timestamp(System.currentTimeMillis())
+    val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags, createTime)
     eventDAO.createEvent(persistenceEvent)
-    context.system.eventStream.publish(event)
+    ReadEventBus.publish(id, event, createTime)
     logger.info(s"Applying event: $event to ${this.getClass.getSimpleName}(id = '$id')")
     applyEvent(id, event, previousState)
   }
