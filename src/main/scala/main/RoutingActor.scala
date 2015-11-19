@@ -13,6 +13,7 @@ import spray.routing._
 class RoutingActor extends HttpService with Json4sSupport with Actor with RequestHandler {
   val json4sFormats = DefaultFormats
 
+  //All the APIs are using get method to make it easy to run the API in the browser.
   val userRoute =
     path("createUser") {
       get {
