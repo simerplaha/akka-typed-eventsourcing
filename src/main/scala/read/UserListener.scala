@@ -10,8 +10,8 @@ object UserListener extends UserAggregateEvents with LazyLogging {
 
   val userListener = {
     Static[(String, UserEvent, Timestamp)] {
-      case (id: String, payload: UserCreated, timestamp: Timestamp) =>
-        logger.info(s"Subscriber -> $id : $payload : $timestamp")
+      case (id: String, event: UserCreated, timestamp: Timestamp) =>
+        logger.info(s"Subscriber -> $id : $event : $timestamp")
       case _ =>
         logger.info("Got some other UserEvent")
     }
