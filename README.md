@@ -114,4 +114,3 @@ Calling CreateUser on a delete users display this message: http://localhost:8080
 - Test cases
 - Stopping Actors after reaching certain threshold of in-memory Actors.
 - Snapshotting
-- Read/Query side implementation with https://github.com/MfgLabs/akka-stream-extensions
