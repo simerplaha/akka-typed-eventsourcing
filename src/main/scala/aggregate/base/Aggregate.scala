@@ -10,12 +10,14 @@ import commands.AggregateCommand
 import database.EventDAO
 import domain.PersistentEvent
 import events.AggregateEvent
-import main.ReadEventBus
+import main.{ConfigProps, ReadEventBus}
 import messages.{Response, State}
 import utils.ActorUtil
 
 import scala.annotation.tailrec
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends ActorUtil with LazyLogging {
 
@@ -26,6 +28,8 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
   private val gson = new Gson()
 
   val emptyList = List.empty[String]
+
+  val queryTimeout = ConfigProps.queryTimeout
 
   /**
     * Persist's the event to database and updates the state.
@@ -39,7 +43,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     val eventJson = gson.toJson(event)
     val createTime = new Timestamp(System.currentTimeMillis())
     val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags, createTime)
-    eventDAO.createEvent(persistenceEvent)
+    Await.result(eventDAO.createEvent(persistenceEvent), queryTimeout seconds)
     ReadEventBus.publish(id, event, createTime)
     logger.info(s"Applying event: $event to ${this.getClass.getSimpleName}(id = '$id')")
     applyEvent(id, event, previousState)
@@ -71,7 +75,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     logger.info(s"Recovering state for Aggregate: ${this.getClass.getSimpleName}(id = '$id')")
     Full[C] {
       case Sig(_, PreStart) =>
-        val pEvents = eventDAO.getEvents(id)
+        val pEvents = Await.result(eventDAO.getEvents(id), queryTimeout seconds).toList
         val events = pEvents map {
           persistentEvent =>
             toEvent(persistentEvent.json, persistentEvent.eventName)
