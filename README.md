@@ -10,6 +10,7 @@ An implementation of Eventsourcing with Akka-typed, Spray, Slick & Postgres.
 2. Implements "Actor per request" pattern using typed actors.
 3. Provides base implementations for [AggregateManager](https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/aggregate/base/AggregateManager.scala) and [Aggregate](https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/aggregate/base/Aggregate.scala).
 4. Uses Akka-typed's Total behavior's lifecycle event 'PreStart' to replay all stored events which restores Actor's state.
+5. Implements an example of CQRS's read side using Akka's EventBus (Check [UserListener](https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/read/UserListener.scala)).
 5. Maps stored JSON events to relevant Case classes.
 6. Uses Slick-pg extension.
 7. Uses Gson for JSON parsing.

@@ -8,12 +8,17 @@ import events.{UserAggregateEvents, UserEvent}
 
 object UserListener extends UserAggregateEvents with LazyLogging {
 
-  val userListener = {
+  /**
+    * Receives UserEvent messages published by the write side.
+    * @see main.ReadEventBus
+    */
+
+  val userListener: Static[(String, UserEvent, Timestamp)] = {
     Static[(String, UserEvent, Timestamp)] {
       case (id: String, event: UserCreated, timestamp: Timestamp) =>
-        logger.info(s"Subscriber -> $id : $event : $timestamp")
+        logger.info(s"Subscriber received message UserEvent -> $id : $event : $timestamp")
       case _ =>
-        logger.info("Got some other UserEvent")
+        logger.info("Subscriber received some UserEvent message.")
     }
   }
 }
