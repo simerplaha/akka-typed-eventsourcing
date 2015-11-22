@@ -34,8 +34,9 @@
 <ol>
 <li>A simple Spray REST API to submit commands to Akka-typed's ActorSystem.</li>
 <li>Implements "Actor per request" pattern using typed actors.</li>
-<li>Provides base implementations for AggregateManager and Aggregate.</li>
+<li>Provides base implementations for <a href="https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/aggregate/base/AggregateManager.scala">AggregateManager</a> and <a href="https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/aggregate/base/Aggregate.scala">Aggregate</a>.</li>
 <li>Uses Akka-typed's Total behavior's lifecycle event 'PreStart' to replay all stored events which restores Actor's state.</li>
+<li>Implements an example of CQRS's read side using Akka's EventBus (Check <a href="https://github.com/simerplaha/akka-typed-eventsourcing/blob/master/src/main/scala/read/UserListener.scala">UserListener</a>).</li>
 <li>Maps stored JSON events to relevant Case classes.</li>
 <li>Uses Slick-pg extension.</li>
 <li>Uses Gson for JSON parsing.</li>
@@ -185,8 +186,6 @@
 <li>Test cases</li>
 <li>Stopping Actors after reaching certain threshold of in-memory Actors.</li>
 <li>Snapshotting</li>
-<li>Read/Query side implementation with <a href="https://github.com/MfgLabs/akka-stream-extensions">https://github.com/MfgLabs/akka-stream-extensions</a>
-</li>
 </ul>
 
       <footer class="site-footer">
