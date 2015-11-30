@@ -20,26 +20,33 @@ object UserAggregate extends Aggregate[UserCommand, UserEvent, UserState] with U
 
   /**
     * State updater
-    * @param id id of this group of events
     * @param event Event to apply to state
     * @param oldState previous state of the User
-    * @return NextBehaviorAndCurrentState - stores the current state of User and the next behavior.
+    * @return UserState - returns User's new state.
     */
-  protected override def applyEvent(id: String, event: UserEvent, oldState: UserState): NextBehaviorAndCurrentState = {
+  protected override def updateState(event: UserEvent, oldState: UserState): UserState = {
     event match {
       case UserCreated(username, name, password) =>
-        val newState = oldState.copy(username, name, password)
-        NextBehaviorAndCurrentState(newState, created(id, newState))
+        oldState.copy(username, name, password)
       case UserNameUpdated(name) =>
-        val newUserState = oldState.copy(name = name)
-        NextBehaviorAndCurrentState(newUserState, created(id, newUserState))
+        oldState.copy(name = name)
       case UserPasswordChanged(password) =>
-        val newUserState = oldState.copy(password = password)
-        NextBehaviorAndCurrentState(newUserState, created(id, newUserState))
+        oldState.copy(password = password)
       case UserDeleted() =>
-        val newState = oldState.copy(deleted = true)
-        NextBehaviorAndCurrentState(newState, deleted(id, newState))
+        oldState.copy(deleted = true)
     }
+  }
+
+  /**
+    * Returns the appropriate Behavior for a state
+    */
+  protected override def getBehavior(id: String, state: UserState): Behavior[UserCommand] = {
+    if (state == initialState)
+      uninitialized(id)
+    else if (state.deleted)
+      deleted(id, state)
+    else
+      created(id, state)
   }
 
   /**
@@ -51,7 +58,7 @@ object UserAggregate extends Aggregate[UserCommand, UserEvent, UserState] with U
         Total[UserCommand] {
           case Initialize(username, name, password, replyTo) =>
             val event = UserCreated(username, name, password)
-            persistAndRespond(id, event, initialState, replyTo, ctx).behavior
+            persistAndRespond(id, event, initialState, replyTo, ctx)
           case error: UserCommand =>
             error.replyTo ! ErrorMessage(s"User not initialized yet! Invalid command: '${error.getClass.getSimpleName}'")
             Stopped
@@ -73,12 +80,12 @@ object UserAggregate extends Aggregate[UserCommand, UserEvent, UserState] with U
               replyTo ! Message("Name unchanged!", Some(user))
               Same
             } else {
-              persistAndRespond(id, UserNameUpdated(name), user, replyTo, ctx).behavior
+              persistAndRespond(id, UserNameUpdated(name), user, replyTo, ctx)
             }
           case ChangePassword(password, replyTo) =>
-            persistAndRespond(id, UserPasswordChanged(password), user, replyTo, ctx).behavior
+            persistAndRespond(id, UserPasswordChanged(password), user, replyTo, ctx)
           case DeleteUser(name, replyTo) =>
-            persistAndRespond(id, UserDeleted(), user, replyTo, ctx).behavior
+            persistAndRespond(id, UserDeleted(), user, replyTo, ctx)
           case Initialize(username, name, password, replyTo) =>
             replyTo ! ErrorMessage(s"Username '$id' with name '$name' already exists.")
             Same
@@ -99,7 +106,7 @@ object UserAggregate extends Aggregate[UserCommand, UserEvent, UserState] with U
             replyTo ! user
             Same
           case DeleteUser(username, replyTo) =>
-            persistAndRespond(id, UserDeleted(), user, replyTo, ctx).behavior
+            persistAndRespond(id, UserDeleted(), user, replyTo, ctx)
           case unhandledCommand: UserCommand =>
             unhandledCommand.replyTo ! ErrorMessage(s"Not a valid request: '${unhandledCommand.getClass.getSimpleName}' for current state: 'deleted'", Some(user))
             Same
