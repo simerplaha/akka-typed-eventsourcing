@@ -69,6 +69,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     val eventJson = gson.toJson(event)
     val createTime = new Timestamp(System.currentTimeMillis())
     val persistenceEvent = PersistentEvent(id, eventJson, event.getClass.getSimpleName, tags, createTime)
+    //TODO: should be async
     Await.result(eventDAO.createEvent(persistenceEvent), queryTimeout seconds)
     ReadEventBus.publish(id, event, createTime)
   }
@@ -84,6 +85,7 @@ trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends 
     Full[C] {
       case Sig(_, PreStart) =>
         logger.info(s"Recovering state for Aggregate: ${this.getClass.getSimpleName}(id = '$id')")
+        //TODO: should be async
         val persistedEvents = Await.result(eventDAO.getEvents(id), queryTimeout seconds).toList
         val recoveredState = persistedEvents.foldLeft(initialState) {
           (state, persistentEvent) =>
