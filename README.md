@@ -114,3 +114,4 @@ Calling CreateUser on a delete users display this message: http://localhost:8080
 - Test cases
 - Stopping Actors after reaching certain threshold of in-memory Actors.
 - Snapshotting
+- Use Kafka as eventstore instead.
