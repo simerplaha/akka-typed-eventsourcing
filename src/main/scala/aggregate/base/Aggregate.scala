@@ -19,8 +19,6 @@ import scala.concurrent.duration._
 
 trait Aggregate[C <: AggregateCommand, E <: AggregateEvent, S <: State] extends ActorUtil with LazyLogging {
 
-  protected case class StateAndBehavior(state: S, behavior: Behavior[C])
-
   private val eventDAO = EventDAO
 
   private val gson = new Gson()
