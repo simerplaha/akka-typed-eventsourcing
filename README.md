@@ -1,6 +1,8 @@
 # Akka-typed-eventsourcing
 ----
 
+[![Join the chat at https://gitter.im/simerplaha/akka-typed-eventsourcing](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/simerplaha/akka-typed-eventsourcing?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 An implementation of Eventsourcing with Akka-typed, Spray, Slick & Postgres.
 
 ## Summary
